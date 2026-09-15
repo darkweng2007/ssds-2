@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>審時度勢保平安大挑戰</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --bg: #f8f9fa;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg);
+            color: #333;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            font-size: 1.4rem;
+            margin-top: 0;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        /* 關卡進度條 */
+        .stepper {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .step-node {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #666;
+            z-index: 2;
+            font-size: 0.9rem;
+        }
+
+        .step-node.active {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .step-node.completed {
+            background: var(--success);
+            color: #fff;
+        }
+
+        .card-box {
+            background: #f1f4f6;
+            border-left: 5px solid var(--primary);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .question-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .option-btn {
+            width: 100%;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .option-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* 全螢幕彈窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 99;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            width: 85%;
+            max-width: 400px;
+            text-align: center;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-icon {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+        }
+
+        .modal-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .select-dropdown {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        .restart-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>審時度勢保平安大挑戰</h1>
+    <div class="subtitle">新視界新人生 ‧ 團體溝通演練</div>
+
+    <!-- 下拉選擇情境 -->
+    <select id="scenario-select" class="select-dropdown" onchange="loadScenario(this.value)">
+        <option value="0">情境 1：桌上的離婚協議書</option>
+        <option value="1">情境 2：嫌棄賺太少與無能</option>
+        <option value="2">情境 3：離婚後探視子女受阻</option>
+        <option value="3">情境 4：深夜未接來電與查勤疑心</option>
+        <option value="4">情境 5：岳父母/公婆的強烈干涉與酸言酸語</option>
+        <option value="5">情境 6：老父母重複嘮叨過往失敗</option>
+    </select>
+
+    <!-- 步驟進度 -->
+    <div class="stepper">
+        <div class="step-node active" id="node-0">審</div>
+        <div class="step-node" id="node-1">時</div>
+        <div class="step-node" id="node-2">度</div>
+        <div class="step-node" id="node-3">勢</div>
+    </div>
+
+    <!-- 內容區域 -->
+    <div id="game-body">
+        <div class="card-box" id="scenario-desc">情境載入中...</div>
+        <div class="question-title" id="question-text">題目載入中...</div>
+        <div id="options-box"></div>
+    </div>
+</div>
+
+<!-- 反饋彈窗 -->
+<div class="modal" id="feedback-modal">
+    <div class="modal-content">
+        <div class="modal-icon" id="modal-icon">❌</div>
+        <div id="modal-msg" style="line-height: 1.5; margin-bottom: 10px;"></div>
+        <button class="modal-btn" id="modal-btn" onclick="closeModal()">再試一次</button>
+    </div>
+</div>
+
+<script>
+const scenarios = [
+    {
+        title: "情境 1：桌上的離婚協議書",
+        desc: "一打開家門，屋裡冷冰冰的。客廳桌上壓著一份立書人處已簽好名字的「離婚協議書」。",
+        steps: [
+            {
+                name: "審",
+                question: "當下看到協議書，大腦火氣飆升時，第一步該怎麼做？",
+                options: [
+                    { text: "(A) 拍照發給親友飆罵「這女人沒良心！」", isCorrect: false, msg: "❌ 這是舊有爆衝行為！只會讓事情擴大並引發更多對立。" },
+                    { text: "(B) 停三秒深呼吸，確認事實，評估當場發飆最壞結果", isCorrect: true, msg: "✅ 答對了！冷靜才能看清現狀，成功阻止情緒水位飆升。" }
+                ]
+            },
+            {
+                name: "時",
+                question: "解碼對方簽字背後真正的「⚪ 白卡潛台詞」是什麼？",
+                options: [
+                    { text: "(A) 她故意要威脅我、讓我當場難堪", isCorrect: false, msg: "❌ 這是大腦的腦補猜測（🔵藍卡），會引發不必要的敵意與對決情緒。" },
+                    { text: "(B) 她對長期溝通感到絕望，不知如何表達困境", isCorrect: true, msg: "✅ 看懂行為背後的防衛與無力感！解鎖下一關。" }
+                ]
+            },
+            {
+                name: "度",
+                question: "為了阻斷舊有的暴力與爭吵，要抽哪張「🔴 紅卡」？",
+                options: [
+                    { text: "(A) 「撕毀協議書，展現男人威嚴讓她服軟」", isCorrect: false, msg: "❌ 這是權控行為！只會大幅增加法律與保護令風險。" },
+                    { text: "(B) 「當場硬碰硬只會引爆衝突，換個想法保平安」", isCorrect: true, msg: "✅ 成功選擇平安認知！阻止衝動行為發表。" }
+                ]
+            },
+            {
+                name: "勢",
+                question: "此刻最適合採取的「平安行動」是什麼？",
+                options: [
+                    { text: "(A) 堵在門口等她回來，逼她當面講清楚", isCorrect: false, msg: "❌ 當場逼問容易演變成限制自由與衝突，踩到法律紅線！" },
+                    { text: "(B) 先洗臉、調整呼吸冷靜下來，使用我訊息表達溝通意願，並考慮找律師或者公正人士陪同理性討論。", isCorrect: true, msg: "🎉 闖關成功！你選擇了最具建設性且保護自己的平安行動！" }
+                ]
+            }
+        ]
+    },
+    {
+        title: "情境 2：嫌棄賺太少與無能",
+        desc: "伴侶抱怨家用不夠，大聲嗆你：「賺這麼少還算什麼男人？真沒用！」",
+        steps: [
+            {
+                name: "審",
+                question: "聽到對方言語刺傷，拳頭緊繃時的第一反應？",
+                options: [
+                    { text: "(A) 拍桌摔杯子反駁：「不然妳去賺啊！」", isCorrect: false, msg: "❌ 毀損物品直接構成精神暴力，會導致保護令聲請！" },
+                    { text: "(B) 我如果控制不住情緒，就通不過這個考驗，甚至會失去這個家庭。", isCorrect: true, msg: "✅ 覺察警報！成功踩住煞車，保住自身與家庭平安。" }
+                ]
+            },
+            {
+                name: "時",
+                question: "解碼對方這句狠話背後的「⚪ 白卡潛台詞」？",
+                options: [
+                    { text: "(A) 她很明顯表現出看不起我，把我當作廢物", isCorrect: false, msg: "❌ 藍卡敵意腦補！這會引發復仇與爆衝對抗。" },
+                    { text: "(B) 她對家庭經濟開銷感到焦慮與失控", isCorrect: true, msg: "✅ 理解對方言語背後的不安與焦慮，解鎖下一步。" }
+                ]
+            },
+            {
+                name: "度",
+                question: "你該為自己抽出一張什麼「🔴 紅卡」？",
+                options: [
+                    { text: "(A) 「我不反擊，以後在這個家就沒地位了」", isCorrect: false, msg: "❌ 錯誤的情緒與地位執念，只會帶來衝突與痛苦。" },
+                    { text: "(B) 她的情緒批評言語不代表我的價值，我要保護好我自己的情緒與行為。", isCorrect: true, msg: "✅ 完美切換紅卡！不把情緒主導權交給對方。" }
+                ]
+            },
+            {
+                name: "勢",
+                question: "下一步合宜的「平安溝通」方式？",
+                options: [
+                    { text: "(A) 冷嘲熱諷「妳花錢也很凶，有資格說我？」", isCorrect: false, msg: "❌ 互相指責只會引爆更嚴重的語言暴力！" },
+                    { text: "(B) 聽到你這麼說，我感覺到很沉重，我們冷靜一下來核對生活開銷的帳目。", isCorrect: true, msg: "🎉 闖關成功！成功使用「我訊息」做客觀理性的溝通！" }
+                ]
+            }
+        ]
+    },
+    {
+        title: "情境 3：離婚後探視子女受阻",
+        desc: "依約前往探視孩子，對方卻鎖上大門、不接電話，並簡訊回覆：「孩子不想見你。」",
+        steps: [
+            {
+                name: "審",
+                question: "站在門外被拒絕，情緒快要斷線時怎麼辦？",
+                options: [
+                    { text: "(A) 大聲敲門、按長鈴，在走廊咆哮", isCorrect: false, msg: "❌ 騷擾行為會直接觸犯保護令，留下不利訴訟紀錄！" },
+                    { text: "(B) 暫停行動、調整呼吸，先想想破壞或騷擾行為，會造成違反保護令/或其他刑事案件。", isCorrect: true, msg: "✅ 正確！避免衝動引發刑事案件，保住理性。" }
+                ]
+            },
+            {
+                name: "時",
+                question: "解碼對方「鎖門拒絕」背後的「⚪ 白卡潛台詞」？",
+                options: [
+                    { text: "(A) 她故意拿孩子當武器挑釁我、報復我", isCorrect: false, msg: "❌ 藍卡敵意猜測只會讓對立升級。" },
+                    { text: "(B) 對方內心仍充滿不安或者負面情緒；可能她有點害怕，也可能有別的原因。", isCorrect: true, msg: "✅ 能看見對方的不安與害怕，展現更高的適應力。" }
+                ]
+            },
+            {
+                name: "度",
+                question: "應抽出的「🔴 紅卡」自我對話？",
+                options: [
+                    { text: "(A) 「今天沒看到孩子我就不走，跟她耗到底」", isCorrect: false, msg: "❌ 當場爭奪只會嚇到孩子，適得其反！" },
+                    { text: "(B) 我想長遠維持與子女的關係，而不要變成更沒有機會探視的鐘點父母。", isCorrect: true, msg: "✅ 著眼長遠利益！不爭一時口氣，維護親子連結。" }
+                ]
+            },
+            {
+                name: "勢",
+                question: "當下最適當的「順勢平安行動」？",
+                options: [
+                    { text: "(A) 奪命連環叩並在社區大樓開罵", isCorrect: false, msg: "❌ 留下騷擾事證，將會嚴重損害未來的探視權。" },
+                    { text: "(B) 傳簡訊回覆：「收到訊息，那我先離開，會請律師（或其他中間人）幫忙協調下次探視時間。」", isCorrect: true, msg: "🎉 闖關成功！合法、安全且合宜的溝通行動！" }
+                ]
+            }
+        ]
+    },
+    {
+        title: "情境 4：深夜未接來電與查勤疑心",
+        desc: "深夜一點多，手機螢幕上顯示「5 通來自伴侶的未接來電」，回到家後，伴侶臉色極度難看。",
+        steps: [
+            {
+                name: "審",
+                question: "對方開口就質問「你去哪裡偷人？」時，如何覺察？",
+                options: [
+                    { text: "(A) 搶過手機摔地上：「妳是在審犯人嗎？」", isCorrect: false, msg: "❌ 摔東西屬於物力暴力，直接觸犯法律紅線！" },
+                    { text: "(B) 發現自己心跳過快、呼吸急促，意識到風險度上升。", isCorrect: true, msg: "✅ 敏銳覺察生理警報，避免情緒失控爆衝。" }
+                ]
+            },
+            {
+                name: "時",
+                question: "解碼對方「連打 5 通電話與質問」的「⚪ 白卡」？",
+                options: [
+                    { text: "(A) 故意找碴、控制我的生活", isCorrect: false, msg: "❌ 把對方的焦慮誤解為控制，容易引發對抗。" },
+                    { text: "(B) 她缺乏安全感，害怕失去或者被背叛。", isCorrect: true, msg: "✅ 看懂對方內心深處缺乏安全感的不安。" }
+                ]
+            },
+            {
+                name: "度",
+                question: "心裡要抽出一張什麼「🔴 紅卡」？",
+                options: [
+                    { text: "(A) 「清者自清，我懶得跟妳講，隨便妳怎麼想」", isCorrect: false, msg: "❌ 冷漠防衛只會讓對方更加焦慮與憤怒！" },
+                    { text: "(B) 不需要當場贏過對方的質疑，換個想法保平安，可能是擔心我的安危。", isCorrect: true, msg: "✅ 換個平安想法，將質疑理解為安危擔心。" }
+                ]
+            },
+            {
+                name: "勢",
+                question: "應採取的「我訊息與平安行動」？",
+                options: [
+                    { text: "(A) 鎖上房門冷戰，任由對方在門外咆哮", isCorrect: false, msg: "❌ 冷戰只會拉長壓迫環境，引爆更大衝突。" },
+                    { text: "(B) 我看到未接來電，知道你很擔心我，我很感謝你。剛剛開車不方便回電，現在讓我們平靜下來講一下。", isCorrect: true, msg: "🎉 闖關成功！完美安撫焦慮並搭起理性溝通橋樑！" }
+                ]
+            }
+        ]
+    },
+    {
+        title: "情境 5：岳父母/公婆的強烈干涉與酸言酸語",
+        desc: "過年聚會時，對方的父母當著眾人的面酸你：「當初要不是我們幫忙，你們現在哪有房子住？」",
+        steps: [
+            {
+                name: "審",
+                question: "當眾被長輩酸、覺得面子掛不住時，第一步？",
+                options: [
+                    { text: "(A) 當場翻桌起立：「這房子我沒出錢嗎？」", isCorrect: false, msg: "❌ 當眾爆發只會讓家庭關係破裂，副作用巨大！" },
+                    { text: "(B) 停三秒，確認「當場爆發只會讓關係徹底破裂」", isCorrect: true, msg: "✅ 停頓三秒，成功化解尊嚴爆衝的危機。" }
+                ]
+            },
+            {
+                name: "時",
+                question: "解碼長輩酸言酸語背後的「⚪ 白卡潛台詞」？",
+                options: [
+                    { text: "(A) 他們全家都在聯手羞辱我、看不起我", isCorrect: false, msg: "❌ 敵意被害腦補，只會拉大陣營對立。" },
+                    { text: "(B) 老人家習慣用這種方式彰顯自己的貢獻與存在感", isCorrect: true, msg: "✅ 看穿老人家需要被肯定與彰顯存在感的習慣。" }
+                ]
+            },
+            {
+                name: "度",
+                question: "心裡應抽出的「🔴 紅卡」？",
+                options: [
+                    { text: "(A) 「今天不討回公道，以後去他們家我都抬不起頭」", isCorrect: false, msg: "❌ 面子執念是引發暴力衝突的常見導火線！" },
+                    { text: "(B) 長輩的固執不代表我的價值，回應「真的很感謝你們當初的支持與幫忙，現在我跟XX（配偶）還有OO（子女）都可以有穩定的居所。」", isCorrect: true, msg: "✅ 展現高情商紅卡！將酸言化解為感謝。" }
+                ]
+            },
+            {
+                name: "勢",
+                question: "合宜的「平安避險行動」？",
+                options: [
+                    { text: "(A) 拉著伴侶要她當場跟父母理論爭輸贏", isCorrect: false, msg: "❌ 把伴侶逼入兩難夾縫，只會傷害夫妻感情。" },
+                    { text: "(B) 保持傾聽不頂撞，之後找機會去廚房幫忙或幫長輩倒水等暫離現場。", isCorrect: true, msg: "🎉 闖關成功！優雅且安全地離開火藥庫現場！" }
+                ]
+            }
+        ]
+    },
+    {
+        title: "情境 6：老父母重複嘮叨過往失敗",
+        desc: "週末回家剛坐下，母親手指著你，又開始講幾年前經商失敗賠錢的往事，父親在一旁沉著臉點頭。",
+        steps: [
+            {
+                name: "審",
+                question: "聽了幾百遍的抱怨又發作，感到極度煩躁時？",
+                options: [
+                    { text: "(A) 大聲頂撞「煩不煩啊！每次回來看妳這張臉！」", isCorrect: false, msg: "❌ 言語頂撞只會讓家中氣氛僵化並引發惡性循環。" },
+                    { text: "(B) 覺察到自己的煩躁情緒，先停3秒不說話，並且調整呼吸。", isCorrect: true, msg: "✅ 覺察煩躁，透過深呼吸成功穩住情緒。" }
+                ]
+            },
+            {
+                name: "時",
+                question: "解碼老父母嘮叨背後的「⚪ 白卡潛台詞」？",
+                options: [
+                    { text: "(A) 他們就是看我沒出息，故意要戳我傷口", isCorrect: false, msg: "❌ 誤解長輩意圖只會增加自己的挫折感。" },
+                    { text: "(B) 年老對未來的不安，只會用舊話題來表達關心", isCorrect: true, msg: "✅ 理解年老父母的不安與無力感。" }
+                ]
+            },
+            {
+                name: "度",
+                question: "心裡要抽出的「🔴 紅卡」？",
+                options: [
+                    { text: "(A) 「我不吼回去，她永遠不知道這句話多傷人」", isCorrect: false, msg: "❌ 期待改變老人家的舊習慣是不現實的。" },
+                    { text: "(B) 「這是老人家的不安，不是否定我的現在」", isCorrect: true, msg: "✅ 區隔父母的不安與自我價值，跳脫對立。" }
+                ]
+            },
+            {
+                name: "勢",
+                question: "最合宜的「平安行動」？",
+                options: [
+                    { text: "(A) 摔門直接離去，半年不回家", isCorrect: false, msg: "❌ 防衛性冷漠只會加深家人的誤解與傷害。" },
+                    { text: "(B) 回應「我知道你們是關心我，我也還記得當時的教訓。」順勢轉移話題：「今天要吃什麼？」", isCorrect: true, msg: "🎉 闖關成功！接納關心＋順勢轉向，完美化解尷尬！" }
+                ]
+            }
+        ]
+    }
+];
+
+let currentScenarioIndex = 0;
+let currentStepIndex = 0;
+
+function loadScenario(index) {
+    currentScenarioIndex = parseInt(index);
+    currentStepIndex = 0;
+    renderGame();
+}
+
+function updateStepper() {
+    for (let i = 0; i < 4; i++) {
+        const node = document.getElementById(`node-${i}`);
+        node.className = 'step-node';
+        if (i < currentStepIndex) {
+            node.classList.add('completed');
+        } else if (i === currentStepIndex) {
+            node.classList.add('active');
+        }
+    }
+}
+
+function renderGame() {
+    updateStepper();
+    const scenario = scenarios[currentScenarioIndex];
+    
+    // 如果通關完成
+    if (currentStepIndex >= 4) {
+        document.getElementById('game-body').innerHTML = `
+            <div style="text-align:center; padding: 20px;">
+                <div style="font-size: 4rem;">🎉</div>
+                <h2 style="color: var(--success)">恭喜完成【${scenario.title}】闖關！</h2>
+                <p style="line-height:1.6; color:#555;">你已成功掌握「審、時、度、勢」四字訣，做出合宜溝通並保護好自己的平安！</p>
+                <button class="restart-btn" onclick="loadScenario(${currentScenarioIndex})">再次演練本情境</button>
+            </div>
+        `;
+        return;
+    }
+
+    const stepData = scenario.steps[currentStepIndex];
+    
+    document.getElementById('scenario-desc').innerHTML = `
+        <strong>${scenario.title}</strong><br>
+        ${scenario.desc}
+    `;
+    
+    document.getElementById('question-text').innerText = `【關卡 ${currentStepIndex + 1}：${stepData.name}】${stepData.question}`;
+    
+    const optionsBox = document.getElementById('options-box');
+    optionsBox.innerHTML = '';
+    
+    stepData.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerText = opt.text;
+        btn.onclick = () => checkAnswer(opt);
+        optionsBox.appendChild(btn);
+    });
+}
+
+function checkAnswer(option) {
+    const modal = document.getElementById('feedback-modal');
+    const modalIcon = document.getElementById('modal-icon');
+    const modalMsg = document.getElementById('modal-msg');
+    const modalBtn = document.getElementById('modal-btn');
+    
+    if (option.isCorrect) {
+        modalIcon.innerText = '✅';
+        modalMsg.innerText = option.msg;
+        modalBtn.innerText = currentStepIndex === 3 ? '領取平安通關' : '解鎖下一步';
+        modalBtn.style.background = 'var(--success)';
+        modalBtn.onclick = () => {
+            closeModal();
+            currentStepIndex++;
+            renderGame();
+        };
+    } else {
+        modalIcon.innerText = '❌';
+        modalMsg.innerText = option.msg;
+        modalBtn.innerText = '再試一次';
+        modalBtn.style.background = 'var(--danger)';
+        modalBtn.onclick = () => {
+            closeModal();
+        };
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('feedback-modal').style.display = 'none';
+}
+
+// 初始載入第一個情境
+loadScenario(0);
+</script>
+
+</body>
+</html>
